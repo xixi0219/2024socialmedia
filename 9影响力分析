@@ -1,0 +1,43 @@
+张盆希202313093039
+install.packages("twitteR")
+install.packages("tm")
+install.packages("wordcloud")
+library(twitteR)
+library(tm)
+library(wordcloud)
+
+# 配置你的Twitter应用的认证信息
+app_name <- "YourAppName"
+consumer_key <- "YourConsumerKey"
+consumer_secret <- "YourConsumerSecret"
+access_token <- "YourAccessToken"
+access_token_secret <- "YourAccessTokenSecret"
+
+# 创建Twitter客户端
+twitter <- createTwitterOAuth(app_name, consumer_key, consumer_secret, access_token, access_token_secret)
+
+# 获取Twitter数据，这里以关键词"SocialMedia"为例
+tweets <- userTimeline(twitter, "SocialMedia", n = 100)
+
+# 将tweets转换为文本数据
+text_data <- sapply(tweets, function(tweet) tweet$getText())
+
+# 创建文本挖掘对象
+corpus <- Corpus(VectorSource(text_data))
+
+# 文本清洗
+corpus <- tm_map(corpus, content_transformer(tolower))
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, removeNumbers)
+corpus <- tm_map(corpus, removeWords, stopwords("en"))
+corpus <- tm_map(corpus, stripWhitespace)
+
+# 创建文档-词项矩阵
+dtm <- DocumentTermMatrix(corpus)
+
+# 计算词频
+m <- as.matrix(dtm)
+word_freqs <- sort(rowSums(m),decreasing = TRUE)
+
+# 制作词云
+wordcloud(names(word_freqs), word_freqs, max.words=100, random.order=FALSE, colors=brewer.pal(8, "Dark2"))
